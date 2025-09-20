@@ -1,0 +1,6 @@
+/* Reduce logo height in side bar*/
+.adminjs_Logo img {
+  max-height: 80px !important;
+  margin: 10px auto !important;
+  object-fit: contain;
+}
