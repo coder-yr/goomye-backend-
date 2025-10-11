@@ -6,23 +6,29 @@ const router = express.Router();
 
 router.get("/mega-menu", async (req, res) => {
   try {
-    const megaMenu = await db.megaCategory.findAll({
-      include: [
-        {
-          model: db.category,
-          as: "categories",
-          include: [
-            {
-              model: db.subCategory,
-              as: "sub_categories",
-            },
-          ],
-        },
-      ],
+    // Get all mega categories
+    const megaCategories = await db.megaCategory.findAll({ raw: true });
+    // Get all categories
+    const categories = await db.category.findAll({ raw: true });
+    // Get all subcategories
+    const subCategories = await db.subCategory.findAll({ raw: true });
+
+    // Build nested structure
+    const menu = {};
+    megaCategories.forEach(mega => {
+      menu[mega.name] = {};
+      const cats = categories.filter(cat => cat.megaCategoryId === mega.id);
+      cats.forEach(cat => {
+        menu[mega.name][cat.name] = [];
+        const subs = subCategories.filter(sub => sub.categoryId === cat.id);
+        subs.forEach(sub => {
+          menu[mega.name][cat.name].push(sub.name);
+        });
+      });
     });
-    res.json(megaMenu);
+    res.json({ menu });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Failed to fetch mega menu data' });
   }
 });
 

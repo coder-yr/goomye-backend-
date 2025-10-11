@@ -1,87 +1,164 @@
 import express from "express";
+import db from "../admin/db.js";
 const router = express.Router();
 
+// Function to seed initial data
+async function seedInitialData() {
+  const t = await db.sequelize.transaction();
+  
+  try {
+    // First create the default mega category
+    const [megaCategory] = await db.megaCategory.findOrCreate({
+      where: { slug: 'electronics' },
+      defaults: {
+        name: 'Electronics',
+        slug: 'electronics',
+      },
+      transaction: t
+    });
+
+    // Create sample categories if they don't exist
+    const categories = [
+      { name: "Computers", slug: "computers" },
+      { name: "Fashion", slug: "fashion" },
+      { name: "Mobiles", slug: "mobiles" },
+      { name: "Gaming", slug: "gaming" },
+      { name: "Beauty", slug: "beauty" },
+      { name: "Home", slug: "home" },
+      { name: "Sports", slug: "sports" },
+      { name: "Health", slug: "health" },
+      { name: "Auto", slug: "auto" },
+      { name: "Books", slug: "books" },
+      { name: "Home Audio", slug: "home-audio" },
+      { name: "Cameras", slug: "cameras" },
+      { name: "Grocery", slug: "grocery" },
+      { name: "Electronics", slug: "electronics" },
+      { name: "TV/Projectors", slug: "tv-projectors" },
+      { name: "Toys", slug: "toys" },
+      { name: "Photo/Video", slug: "photo-video" },
+      { name: "Collectibles", slug: "collectibles" }
+    ];
+
+    for (const cat of categories) {
+      const [category] = await db.category.findOrCreate({
+        where: { slug: cat.slug },
+        defaults: {
+          name: cat.name,
+          slug: cat.slug,
+          megaCategoryId: megaCategory.id
+        },
+        transaction: t
+      });
+
+      // Create a default sub category if it doesn't exist
+      const [subCategory] = await db.subCategory.findOrCreate({
+        where: { slug: `${cat.slug}-general` },
+        defaults: {
+          name: `${cat.name} General`,
+          slug: `${cat.slug}-general`,
+          categoryId: category.id
+        },
+        transaction: t
+      });
+
+      // Add sample products for each category
+      const products = [
+        {
+          name: `Sample ${cat.name} Product 1`,
+          images: ['https://via.placeholder.com/300'],
+          price: 999.99,
+          mrp: 1299.99,
+          discount: 23,
+          slug: `sample-${cat.slug}-1`,
+          description: `A great ${cat.name} product`,
+          categoryId: category.id,
+          megaCategoryId: megaCategory.id,
+          subCategoryId: subCategory.id,
+          youtubeUrl: "https://youtube.com",
+          shortcode: `${cat.slug.toUpperCase()}-001`,
+          trendingOrder: 1,
+          listingOrder: 1,
+          active: true
+        },
+        {
+          name: `Sample ${cat.name} Product 2`,
+          images: ['https://via.placeholder.com/300'],
+          price: 1299.99,
+          mrp: 1599.99,
+          discount: 19,
+          slug: `sample-${cat.slug}-2`,
+          description: `Another amazing ${cat.name} product`,
+          categoryId: category.id,
+          megaCategoryId: megaCategory.id,
+          subCategoryId: subCategory.id,
+          youtubeUrl: "https://youtube.com",
+          shortcode: `${cat.slug.toUpperCase()}-002`,
+          trendingOrder: 2,
+          listingOrder: 2,
+          active: true
+        }
+      ];
+
+      for (const product of products) {
+        await db.products.findOrCreate({
+          where: { slug: product.slug },
+          defaults: product,
+          transaction: t
+        });
+      }
+    }
+
+    await t.commit();
+    console.log('Sample data seeded successfully');
+  } catch (error) {
+    await t.rollback();
+    console.error('Error seeding data:', error);
+  }
+}
+
+// Seed initial data when the server starts
+seedInitialData().then(() => {
+  console.log('Initial data seeding completed successfully');
+}).catch(err => {
+  console.error('Error seeding initial data:', err);
+});
+
 // GET /api/products/:productId/reviews - Product reviews (mock)
-router.get("/:productId/reviews", (req, res) => {
+router.get("/:productId/reviews", async (req, res) => {
   const { productId } = req.params;
   const { page = 1, limit = 5 } = req.query;
-
-  // Mock review stats
-  const stats = {
-    average: 4.65,
-    count: 645,
-    breakdown: {
-      5: 239,
-      4: 432,
-      3: 53,
-      2: 32,
-      1: 13
+  try {
+    const pid = Number(productId);
+    if (isNaN(pid)) {
+      return res.status(400).json({ error: "Invalid productId" });
     }
-  };
-
-  // Mock reviews
-  const reviews = [
-    {
-      id: 1,
-      user: "Michael Gough",
-      rating: 5,
-      date: "November 18 2023 at 15:35",
-      verified: true,
-      text: "My old IMAC was from 2013. This replacement was well needed. Very fast, and the colour matches my office set up perfectly. The display is out of this world and I'm very happy with this purchase.",
-      helpfulYes: 3,
-      helpfulNo: 0
-    },
-    {
-      id: 2,
-      user: "Jese Leos",
-      rating: 5,
-      date: "November 18 2023 at 15:35",
-      verified: true,
-      text: "It's fancy, amazing keyboard, matching accessories. Super fast, batteries last more than usual, everything runs perfect in this computer. Highly recommend!",
-      image: "https://via.placeholder.com/100",
-      helpfulYes: 1,
-      helpfulNo: 0
-    },
-    {
-      id: 3,
-      user: "Bonnie Green",
-      rating: 5,
-      date: "November 18 2023 at 15:35",
-      verified: true,
-      text: "My old IMAC was from 2013. This replacement was well needed. Very fast, and the colour matches my office set up perfectly. The display is out of this world and I'm very happy with this purchase.",
-      helpfulYes: 0,
-      helpfulNo: 0
-    },
-    {
-      id: 4,
-      user: "Roberta Casas",
-      rating: 5,
-      date: "November 18 2023 at 15:35",
-      verified: true,
-      text: "I have used earlier Mac computers in my university work for a number of years and found them easy to use. The iMac 2021 is no exception. It works straight out of the box giving superb definition from the HD screen. Basic tools such as a browser (Safari) and a mail client are included in the system. Microsoft Office apps can be downloaded from the App Store though they may only work in read-only mode unless you take out a subscription. The instruction manual that comes with it is the size of a piece of toilet paper but the proper user guide is on-line.",
-      helpfulYes: 1,
-      helpfulNo: 0
-    },
-    {
-      id: 5,
-      user: "Neil Sims",
-      rating: 4,
-      date: "November 18 2023 at 15:35",
-      verified: true,
-      text: "I replaced my 11 year old iMac with the new M1 Apple. I wanted to remain with Apple as my old one is still working perfectly and all Apple products are so reliable. Setting up was simple and fast and transferring everything from my previous iMac worked perfectly.",
-      helpfulYes: 1,
-      helpfulNo: 0
+    const offset = (Number(page) - 1) * Number(limit);
+    const reviews = await db.reviews.findAll({
+      where: { productId: pid },
+      offset,
+      limit: Number(limit),
+      order: [["createdAt", "DESC"]]
+    });
+    // Calculate stats
+    const allReviews = await db.reviews.findAll({ where: { productId: pid } });
+    const count = allReviews.length;
+    const average = count > 0 ? (allReviews.reduce((sum, r) => sum + r.rating, 0) / count) : 0;
+    const breakdown = {};
+    for (let i = 1; i <= 5; i++) {
+      breakdown[i] = allReviews.filter(r => r.rating === i).length;
     }
-  ];
-
-  res.json({
-    productId,
-    stats,
-    reviews,
-    page: Number(page),
-    limit: Number(limit),
-    total: stats.count
-  });
+    res.json({
+      productId: pid,
+      stats: { average, count, breakdown },
+      reviews,
+      page: Number(page),
+      limit: Number(limit),
+      total: count
+    });
+  } catch (err) {
+    console.error("Error fetching reviews for product", productId, err);
+    res.status(500).json({ error: "Failed to fetch reviews", details: err.message });
+  }
 });
 
 export default router;
@@ -169,7 +246,7 @@ router.get('/list', (req, res) => {
       {
         id: 'imac-m1',
         name: 'Apple iMac 24" M1',
-        image: 'https://via.placeholder.com/120x120',
+        image: '/apple-imac-27.jpg',
         price: 1199,
         colors: ['#fff', '#000', '#f0f0f0', '#e0e0e0'],
         inStock: true
@@ -177,7 +254,7 @@ router.get('/list', (req, res) => {
       {
         id: 'ps5',
         name: 'PlayStation 5 Console',
-        image: 'https://via.placeholder.com/120x120',
+        image: '/playstation-5-slim.png',
         price: 499,
         colors: ['#fff', '#000'],
         inStock: true
@@ -185,7 +262,7 @@ router.get('/list', (req, res) => {
       {
         id: 'ipad-pro',
         name: 'iPad Pro 12.9" 2021 WiFi 128GB',
-        image: 'https://via.placeholder.com/120x120',
+        image: '/ipad-pro-13.jpg',
         price: 1199,
         colors: ['#fff', '#000', '#e0e0e0'],
         inStock: true
@@ -193,7 +270,7 @@ router.get('/list', (req, res) => {
       {
         id: 'nokia-gseries',
         name: 'Nokia Gseries G110 5G',
-        image: 'https://via.placeholder.com/120x120',
+        image: '/Tab.jpg',
         price: 499,
         colors: ['#fff', '#000'],
         inStock: true
@@ -201,7 +278,7 @@ router.get('/list', (req, res) => {
       {
         id: 'iphone-15',
         name: 'Apple iPhone 15 Pro Max',
-        image: 'https://via.placeholder.com/120x120',
+        image: '/iphone-15-pro-max.png',
         price: 1299,
         colors: ['#fff', '#000', '#f0f0f0'],
         inStock: true
@@ -209,7 +286,7 @@ router.get('/list', (req, res) => {
       {
         id: 'mac-air',
         name: 'Mac Air 15" (2021)',
-        image: 'https://via.placeholder.com/120x120',
+        image: '/apple-imac-27.jpg',
         price: 1099,
         colors: ['#fff', '#000', '#e0e0e0'],
         inStock: true
@@ -228,49 +305,63 @@ router.get('/list', (req, res) => {
 });
 
 // GET /api/products - List products for landing page (mock)
-router.get('/', (req, res) => {
-  res.json({
-    products: [
-      {
-        id: 'sony-ht-s20r',
-        name: 'SONY HT-S20R 400W Bluetooth Home Theatre...',
-        image: 'https://via.placeholder.com/120x120',
-        price: 9890,
-        oldPrice: 12990,
-        rating: 4.8,
-        reviews: 1200
-      },
-      {
-        id: 'lenovo-lq-15k3q',
-        name: 'Lenovo LQJ 15K3Q Intel Core i7 14th Gen Gaming...',
-        image: 'https://via.placeholder.com/120x120',
-        price: 72990,
-        oldPrice: 89990,
-        rating: 4.6,
-        reviews: 900
-      },
-      {
-        id: 'coros-vertix',
-        name: 'Coros Vertix 2 Adventure GPS Smartwatch',
-        image: 'https://via.placeholder.com/120x120',
-        price: 49990,
-        oldPrice: 59990,
-        rating: 4.7,
-        reviews: 800
-      },
-      {
-        id: 'lg-fridge',
-        name: 'LG 4.8 Star Inverter Fully Automatic Top Load...',
-        image: 'https://via.placeholder.com/120x120',
-        price: 24990,
-        oldPrice: 29990,
-        rating: 4.5,
-        reviews: 600
+router.get('/', async (req, res) => {
+  try {
+    const { category } = req.query;
+    console.log('Requested category:', category);
+    
+    const where = {};
+    if (category) {
+      // Normalize the category slug
+      const normalizedSlug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      console.log('Normalized slug:', normalizedSlug);
+      
+      // Try to find category by slug or name
+      const cat = await db.category.findOne({
+        where: {
+          [db.Sequelize.Op.or]: [
+            { slug: normalizedSlug },
+            { name: db.Sequelize.where(db.Sequelize.fn('LOWER', db.Sequelize.col('name')), normalizedSlug.replace(/-/g, ' ')) }
+          ]
+        },
+        raw: true
+      });
+      console.log('Found category:', cat);
+      
+      if (cat) {
+        where.categoryId = cat.id;
+      } else {
+        console.log('No category found for:', category);
+        // No matching category, return empty
+        return res.json({ products: [] });
       }
-    ]
-  });
-});
+    }
+    
+    console.log('Query where clause:', where);
+    const products = await db.products.findAll({ 
+      where,
+      attributes: ['id', 'name', 'images', 'price', 'slug', 'description', 'tagLine', 'youtubeUrl'],
+      raw: true 
+    });
+    console.log('Found products:', products.length);
 
+    // Transform the data for the frontend
+    const transformedProducts = products.map(product => ({
+      id: product.id,
+      name: product.name,
+      price: product.price || 0,
+      images: Array.isArray(product.images) ? product.images : [],
+      description: product.description || '',
+      tagLine: product.tagLine || '',
+      youtubeUrl: product.youtubeUrl || ''
+    }));
+
+    res.json({ products: transformedProducts });
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
 
 // GET /api/products/my - List reviews written by the current user (mock)
 router.get('/my', (req, res) => {
@@ -352,21 +443,53 @@ router.get('/my', (req, res) => {
 
 // POST /api/products/:productId/reviews - Add a new review for a product
 router.post('/:productId/reviews', (req, res) => {
-  const { rating, title, description, images, recommend } = req.body;
-  // In real implementation, validate and save to DB
-  // For now, return mock success response
-  res.status(201).json({
-    message: 'Review submitted successfully',
-    review: {
-      id: Math.floor(Math.random() * 10000),
+router.post('/:productId/reviews', async (req, res) => {
+  try {
+    const { rating, title, description, images, recommend } = req.body;
+    // You should get customerId from authentication middleware/session
+    const customerId = req.user?.id || 1; // Replace with real user ID logic
+
+    const review = await db.reviews.create({
       productId: req.params.productId,
+      customerId,
       rating,
+      comment: description,
       title,
-      description,
       images: images || [],
       recommend,
-      reviewer: 'Anonymous',
-      date: new Date().toISOString().slice(0, 10)
-    }
-  });
+    });
+
+    res.status(201).json({ message: 'Review submitted successfully', review });
+  } catch (err) {
+    console.error('Error saving review:', err);
+    res.status(500).json({ error: 'Failed to submit review' });
+  }
+});
+
+// Trending products endpoint for frontend landing page
+router.get('/api/products/trending', async (req, res) => {
+  try {
+    const products = await db.products.findAll({
+      where: { trendingOrder: { [db.Sequelize.Op.gt]: 0 } },
+      order: [['trendingOrder', 'ASC']],
+      limit: 12
+    });
+    res.json({ products });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch trending products' });
+  }
+});
+
+// Trending products endpoint for local frontend
+router.get('/api/products/trending', async (req, res) => {
+  try {
+    const products = await db.products.findAll({
+      where: { trendingOrder: { [db.Sequelize.Op.gt]: 0 } },
+      order: [['trendingOrder', 'ASC']],
+      limit: 12
+    });
+    res.json({ products });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch trending products' });
+  }
 });

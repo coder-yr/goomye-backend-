@@ -7,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 import mega_category from "./models/mega_category.js";
+import reviews from "./models/reviews.js";
 import category from "./models/category.js";
 import sub_category from "./models/subcategory.js";
 import banners from "./models/banners.js";
@@ -17,10 +18,13 @@ import home from "./models/home.js";
 import productLandscape from "./models/product_landscape_home.js";
 import productSquare from "./models/product_square_home.js";
 import products from "./models/product.js";
+import cart from "./models/cart.js";
+import cart_item from "./models/cart_item.js";
 import coupons from "./models/coupons.js";
 import addresses from "./models/addresses.js";
 import customers from "./models/customers.js";
 import orders from "./models/orders.js";
+import user from "./models/user.js";
 const config = {
   dialect: "mysql",
   host: "127.0.0.1",
@@ -60,6 +64,8 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 db.megaCategory = mega_category(sequelize);
+db.customers = customers(sequelize);
+db.reviews = reviews(sequelize);
 db.category = category(sequelize);
 db.subCategory = sub_category(sequelize);
 db.banners = banners(sequelize);
@@ -69,11 +75,13 @@ db.productLandscape = productLandscape(sequelize);
 db.productSquare = productSquare(sequelize);
 db.giftCardsHome = giftCardsHome(sequelize);
 db.products = products(sequelize);
+db.cart = cart(sequelize);
+db.cart_item = cart_item(sequelize);
 db.subbanners = subbanners(sequelize);
 db.coupons = coupons(sequelize);
 db.addresses = addresses(sequelize);
 db.orders = orders(sequelize);
-db.customers = customers(sequelize);
+db.user = user(sequelize);
 
 // Debug: Log all initialized model keys
 console.log("DB MODELS:", Object.keys(db));
@@ -91,6 +99,13 @@ db.orders.belongsTo(db.customers, { foreignKey: "customerId", as: "customer" });
 db.addresses.hasMany(db.orders, { foreignKey: "addressId", as: "orders" });
 db.orders.belongsTo(db.addresses, { foreignKey: "addressId", as: "address" });
 
+// Association for Reviews to Customer
+db.reviews.belongsTo(db.customers, { foreignKey: "customerId", as: "customer" });
+
+// Cart and CartItem associations
+db.cart.hasMany(db.cart_item, { foreignKey: "cartId", as: "items" });
+db.cart_item.belongsTo(db.cart, { foreignKey: "cartId", as: "cart" });
+db.cart_item.belongsTo(db.products, { foreignKey: "productId", as: "products" });
 // Sync models to DB (creates tables if not exist)
 import process from "process";
 if (process.env.NODE_ENV !== "production") {

@@ -1,0 +1,425 @@
+{
+  "info": {
+    "name": "Goomye API Collection",
+    "description": "Simple API collection for testing Goomye platform",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"phone\": \"1234567890\",\n  \"password\": \"test123\",\n  \"confirmPassword\": \"test123\",\n  \"whatsappUpdates\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"test123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
+            }
+          }
+        },
+        {
+          "name": "Get Products List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/list",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "list"]
+            }
+          }
+        },
+        {
+          "name": "Get Product Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/imac-m1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "imac-m1"]
+            }
+          }
+        },
+        {
+          "name": "Get Product Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/imac-m1/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "imac-m1", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "Add Product Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"title\": \"Great Product\",\n  \"description\": \"Works well\",\n  \"recommend\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products/imac-m1/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "imac-m1", "reviews"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart & Checkout",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/cart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "cart"]
+            }
+          }
+        },
+        {
+          "name": "Guest Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"shippingAddress\": {\n    \"line1\": \"123 Test St\",\n    \"city\": \"Test City\",\n    \"zipcode\": \"12345\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/checkout/guest",
+              "host": ["{{base_url}}"],
+              "path": ["api", "checkout", "guest"]
+            }
+          }
+        },
+        {
+          "name": "Review and Pay",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"Card\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/checkout/pay",
+              "host": ["{{base_url}}"],
+              "path": ["api", "checkout", "pay"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Order Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/12345/details",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "12345", "details"]
+            }
+          }
+        },
+        {
+          "name": "Track Order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/orders/12345/track",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "12345", "track"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Returns",
+      "item": [
+        {
+          "name": "Get Returnable Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/returns/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "products"]
+            }
+          }
+        },
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/returns/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/returns/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get Wishlist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/returns/wishlist",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "wishlist"]
+            }
+          }
+        },
+        {
+          "name": "Get My Refunds",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/returns/my-refunds",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "my-refunds"]
+            }
+          }
+        },
+        {
+          "name": "Get Refund Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/returns/refund-status/12345",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "refund-status", "12345"]
+            }
+          }
+        },
+        {
+          "name": "Get Refund Options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/returns/refund-options",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "refund-options"]
+            }
+          }
+        },
+        {
+          "name": "Get Delivery Options",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/returns/delivery-options",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "delivery-options"]
+            }
+          }
+        },
+        {
+          "name": "Submit Return Reason",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"1\",\n  \"orderNumber\": \"12345\",\n  \"condition\": \"damaged\",\n  \"mainReasons\": [\"Defective product\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/returns/reasons",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "reasons"]
+            }
+          }
+        },
+        {
+          "name": "Confirm Return",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"1\",\n  \"orderNumber\": \"12345\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/checkout/pay",
+              "host": ["{{base_url}}"],
+              "path": ["api", "returns", "confirm"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Navigation",
+      "item": [
+        {
+          "name": "Get Mega Menu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/mega-menu",
+              "host": ["{{base_url}}"],
+              "path": ["api", "mega-menu"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Upload",
+      "item": [
+        {
+          "name": "Upload Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/upload/image",
+              "host": ["{{base_url}}"],
+              "path": ["api", "upload", "image"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -2,30 +2,40 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import db from "../admin/db.js";
+import { Op } from "sequelize";
 
 const router = Router();
 
-// Register
-router.post("/register", async (req, res) => {
-  const { name, email, phone, password, confirmPassword, whatsappUpdates } = req.body;
-  if (!name || !email || !phone || !password || !confirmPassword) {
+// Signup (User Registration)
+router.post("/signup", async (req, res) => {
+  const { name, email, phone, password } = req.body;
+  if (!name || !email || !phone || !password) {
     return res.status(400).json({ error: "All fields are required" });
   }
-  if (password !== confirmPassword) {
-    return res.status(400).json({ error: "Passwords do not match" });
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters" });
   }
   try {
-    const existing = await db.customers.findOne({ where: { email } });
-    if (existing) return res.status(409).json({ error: "Email already registered" });
+    const existing = await db.user.findOne({
+      where: {
+        [Op.or]: [{ email }, { phone }],
+      },
+    });
+    if (existing) return res.status(409).json({ error: "Email or phone already registered" });
     const hash = await bcrypt.hash(password, 10);
-    const user = await db.customers.create({
+    const user = await db.user.create({
       name,
       email,
       phone,
       password: hash,
-      whatsappUpdates: typeof whatsappUpdates === "boolean" ? whatsappUpdates : false
     });
-    res.status(201).json({ message: "User registered", user: { id: user.id, email: user.email, phone: user.phone, whatsappUpdates: user.whatsappUpdates } });
+    // Generate JWT token
+  const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET || "default_secret", { expiresIn: "1d" });
+    res.status(201).json({
+      message: "Signup successful",
+      user: { id: user.id, name: user.name, email: user.email, phone: user.phone },
+      token,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -36,11 +46,12 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "Email and password required" });
   try {
-    const user = await db.customers.findOne({ where: { email } });
+    // Use the same user table used for signup
+    const user = await db.user.findOne({ where: { email } });
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: "Invalid credentials" });
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET || "secret", { expiresIn: "1d" });
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET || "default_secret", { expiresIn: "1d" });
     res.json({ message: "Login successful", token });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -61,5 +72,20 @@ router.post("/reset-password", async (req, res) => {
   // Here you would verify the token and update the password
   res.json({ message: "Password reset (not implemented)" });
 });
+
+
+// JWT authentication middleware
+export function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'No token provided' });
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    req.user = { id: decoded.id, email: decoded.email };
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}
 
 export default router;

@@ -1,0 +1,241 @@
+{
+  "info": {
+    "name": "Goomye Backend API",
+    "description": "Complete API collection for Goomye e-commerce platform",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8001", "type": "string" },
+    { "key": "jwt_token", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"phone\": \"1234567890\",\n  \"password\": \"test123\",\n  \"confirmPassword\": \"test123\",\n  \"whatsappUpdates\": false\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api", "auth", "register"] }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"test123\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api", "auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  if (data && data.token) {",
+                  "    pm.collectionVariables.set('jwt_token', data.token);",
+                  "    console.log('jwt_token saved to collection variables');",
+                  "  }",
+                  "} catch (e) {",
+                  "  console.log('No JSON token in response');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"test@example.com\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/forgot-password", "host": ["{{base_url}}"], "path": ["api", "auth", "forgot-password"] }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"reset_token_here\",\n  \"newPassword\": \"newpassword123\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/reset-password", "host": ["{{base_url}}"], "path": ["api", "auth", "reset-password"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart Management",
+      "item": [
+        {
+          "name": "Get Cart",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/cart", "host": ["{{base_url}}"], "path": ["api", "cart"] } }
+        }
+      ]
+    },
+    {
+      "name": "Checkout Process",
+      "item": [
+        {
+          "name": "Guest Checkout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"shippingAddress\": {\n    \"line1\": \"123 Test St\",\n    \"city\": \"Test City\",\n    \"zipcode\": \"12345\"\n  },\n  \"shippingMethod\": {\n    \"id\": \"standard\",\n    \"name\": \"Standard Shipping\"\n  },\n  \"cart\": {\n    \"items\": [\n      {\n        \"productId\": 1,\n        \"name\": \"Test Product\",\n        \"price\": 100,\n        \"quantity\": 1\n      }\n    ],\n    \"total\": 100\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/checkout/guest", "host": ["{{base_url}}"], "path": ["api", "checkout", "guest"] }
+          }
+        },
+        {
+          "name": "Logged-in User Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{jwt_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingAddress\": {\n    \"line1\": \"123 Main St\",\n    \"line2\": \"Apt 4B\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipcode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"shippingMethod\": {\n    \"id\": \"standard\",\n    \"name\": \"Standard Shipping\",\n    \"price\": 0\n  },\n  \"cart\": {\n    \"items\": [\n      {\n        \"productId\": 1,\n        \"name\": \"Sample Product\",\n        \"price\": 299,\n        \"quantity\": 1\n      }\n    ],\n    \"total\": 299\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/checkout", "host": ["{{base_url}}"], "path": ["api", "checkout"] }
+          }
+        },
+        {
+          "name": "Review and Pay",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"Card\",\n  \"cardDetails\": {\n    \"cardNumber\": \"4111111111111111\",\n    \"expiryMonth\": \"12\",\n    \"expiryYear\": \"2025\",\n    \"cvv\": \"123\",\n    \"nameOnCard\": \"John Doe\"\n  },\n  \"billingAddress\": {\n    \"line1\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipcode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"shippingAddress\": {\n    \"line1\": \"123 Main St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipcode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"shippingMethod\": {\n    \"id\": \"standard\",\n    \"name\": \"Standard Shipping\"\n  },\n  \"cart\": {\n    \"items\": [\n      {\n        \"productId\": 1,\n        \"name\": \"Sample Product\",\n        \"price\": 229,\n        \"quantity\": 1\n      }\n    ],\n    \"total\": 229\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/checkout/pay", "host": ["{{base_url}}"], "path": ["api", "checkout", "pay"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders Management",
+      "item": [
+        {
+          "name": "Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders?page=1&limit=10&status=All",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "All" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Order Details",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/orders/12345/details", "host": ["{{base_url}}"], "path": ["api", "orders", "12345", "details"] } }
+        },
+        {
+          "name": "Track Order",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/orders/12345/track", "host": ["{{base_url}}"], "path": ["api", "orders", "12345", "track"] } }
+        }
+      ]
+    },
+    {
+      "name": "Products & Reviews",
+      "item": [
+        { "name": "Get All Products", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/products", "host": ["{{base_url}}"], "path": ["api", "products"] } } },
+        { "name": "Get Products List (Paginated)", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/products/list", "host": ["{{base_url}}"], "path": ["api", "products", "list"] } } },
+        { "name": "Get Product Details", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/products/imac-m1", "host": ["{{base_url}}"], "path": ["api", "products", "imac-m1"] } } },
+        { "name": "Get Product Reviews", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/products/imac-m1/reviews?page=1&limit=5", "host": ["{{base_url}}"], "path": ["api", "products", "imac-m1", "reviews"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "5" }] } } },
+        {
+          "name": "Add Product Review",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{jwt_token}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"rating\": 5,\n  \"title\": \"Excellent Product!\",\n  \"description\": \"This product exceeded my expectations. Great quality and fast delivery.\",\n  \"recommend\": true,\n  \"images\": []\n}" },
+            "url": { "raw": "{{base_url}}/api/products/imac-m1/reviews", "host": ["{{base_url}}"], "path": ["api", "products", "imac-m1", "reviews"] }
+          }
+        },
+        { "name": "Get My Reviews", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }], "url": { "raw": "{{base_url}}/api/products/my", "host": ["{{base_url}}"], "path": ["api", "products", "my"] } } }
+      ]
+    },
+    {
+      "name": "Returns & Refunds",
+      "item": [
+        { "name": "Get Returnable Products", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }], "url": { "raw": "{{base_url}}/api/returns/products", "host": ["{{base_url}}"], "path": ["api", "returns", "products"] } } },
+        { "name": "Get Return Categories", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/returns/categories", "host": ["{{base_url}}"], "path": ["api", "returns", "categories"] } } },
+        { "name": "Get User Profile", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }], "url": { "raw": "{{base_url}}/api/returns/profile", "host": ["{{base_url}}"], "path": ["api", "returns", "profile"] } } },
+        { "name": "Get Wishlist", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }], "url": { "raw": "{{base_url}}/api/returns/wishlist", "host": ["{{base_url}}"], "path": ["api", "returns", "wishlist"] } } },
+        { "name": "Get My Refunds", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }], "url": { "raw": "{{base_url}}/api/returns/my-refunds", "host": ["{{base_url}}"], "path": ["api", "returns", "my-refunds"] } } },
+        { "name": "Get Refund Status", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{jwt_token}}" }], "url": { "raw": "{{base_url}}/api/returns/refund-status/FWB127364372", "host": ["{{base_url}}"], "path": ["api", "returns", "refund-status", "FWB127364372"] } } },
+        { "name": "Get Refund Options", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/returns/refund-options", "host": ["{{base_url}}"], "path": ["api", "returns", "refund-options"] } } },
+        { "name": "Get Delivery Options", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/returns/delivery-options", "host": ["{{base_url}}"], "path": ["api", "returns", "delivery-options"] } } },
+        {
+          "name": "Submit Return Reason",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{jwt_token}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"1\",\n  \"orderNumber\": \"#737423642\",\n  \"condition\": \"damaged\",\n  \"mainReasons\": [\"Defective product\", \"Wrong item received\"],\n  \"otherCondition\": \"\",\n  \"otherReason\": \"Product was damaged during shipping\"\n}" },
+            "url": { "raw": "{{base_url}}/api/returns/reasons", "host": ["{{base_url}}"], "path": ["api", "returns", "reasons"] }
+          }
+        },
+        {
+          "name": "Confirm Product Return",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{jwt_token}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"productId\": \"1\",\n  \"orderNumber\": \"#737423642\",\n  \"returnReason\": \"Defective product\",\n  \"refundOption\": \"money\",\n  \"deliveryOption\": \"pickup\"\n}" },
+            "url": { "raw": "{{base_url}}/api/returns/confirm", "host": ["{{base_url}}"], "path": ["api", "returns", "confirm"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Navigation & Menu",
+      "item": [
+        { "name": "Get Mega Menu", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/mega-menu", "host": ["{{base_url}}"], "path": ["api", "mega-menu"] } } }
+      ]
+    },
+    {
+      "name": "File Upload",
+      "item": [
+        {
+          "name": "Upload Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [ { "key": "file", "type": "file", "src": [] } ]
+            },
+            "url": { "raw": "{{base_url}}/api/upload/image", "host": ["{{base_url}}"], "path": ["api", "upload", "image"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        { "name": "Health Check", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/", "host": ["{{base_url}}"], "path": [""] } } }
+      ]
+    }
+  ],
+  "event": []
+}

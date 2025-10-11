@@ -12,7 +12,7 @@ export default (sequelize) => {
       },
       phone: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       whatsappUpdates: {
         type: DataTypes.BOOLEAN,
@@ -25,6 +25,20 @@ export default (sequelize) => {
       password: {
         type: DataTypes.STRING,
         allowNull: true,
+      },
+      avatarUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      userId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: 'Reference to the authenticated user ID'
+      },
+      isGuest: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
     },
     {
