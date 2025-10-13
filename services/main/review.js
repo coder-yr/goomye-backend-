@@ -42,6 +42,9 @@ router.post("/products/:id/reviews", authenticateToken, async (req, res) => {
     const productId = req.params.id;
     const customerId = req.user?.id;
     const { rating, title, comment, recommend, photos } = req.body;
+    if (!customerId) {
+      return res.status(401).json({ error: "You must be signed in to submit a review." });
+    }
     if (!rating || !title || !comment) {
       return res.status(400).json({ error: "Missing required fields" });
     }

@@ -74,6 +74,9 @@ router.get("/profile", authMiddleware, async (req, res) => {
     const userId = req.user.id;
     const user = await db.customers.findByPk(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.isGuest) {
+      return res.status(403).json({ error: "Guest users cannot access profile." });
+    }
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });

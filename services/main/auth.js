@@ -29,11 +29,21 @@ router.post("/signup", async (req, res) => {
       phone,
       password: hash,
     });
+    // Also create a customer record for this user
+    const customer = await db.customers.create({
+      name,
+      email,
+      phone,
+      whatsappUpdates: false,
+      userId: user.id,
+      isGuest: false,
+    });
     // Generate JWT token
-  const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET || "default_secret", { expiresIn: "1d" });
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET || "default_secret", { expiresIn: "1d" });
     res.status(201).json({
       message: "Signup successful",
       user: { id: user.id, name: user.name, email: user.email, phone: user.phone },
+      customer: { id: customer.id, name: customer.name, email: customer.email },
       token,
     });
   } catch (err) {

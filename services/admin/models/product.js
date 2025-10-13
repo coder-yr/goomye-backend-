@@ -15,7 +15,7 @@ export default (sequelize) => {
       },
       youtubeUrl: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
       },
       subHeading: {
         type: DataTypes.STRING,

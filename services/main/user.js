@@ -7,7 +7,7 @@ const router = express.Router();
 // GET /api/user/profile - returns user profile (protected)
 router.get("/profile", authenticateToken, async (req, res) => {
   try {
-    const db = (await import("../../admin/db.js")).default;
+  const db = (await import("../../services/admin/db.js")).default;
     const userId = req.user?.id;
     if (!userId) return res.status(400).json({ error: "Missing user id" });
     const user = await db.user.findByPk(userId);

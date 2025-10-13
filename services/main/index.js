@@ -30,6 +30,7 @@ dotenv.config();
 // EXPRESS APP
 const app = express();
 app.use(cors());
+app.use(express.static("public")); // Serve public folder for static files
 app.use("/images", express.static("images"));
 app.use(express.json());
 
