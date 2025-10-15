@@ -1,8 +1,62 @@
+
 import express from "express";
 import { authenticateToken } from "../../main/auth.js";
 import db from "../admin/db.js";
-
 const router = express.Router();
+
+// PUT /api/reviews/:id - edit a review
+router.put("/reviews/:id", authenticateToken, async (req, res) => {
+  try {
+    const reviewId = req.params.id;
+    const customerId = req.user?.id;
+    const { rating, comment } = req.body;
+    // Only allow editing own review
+    const review = await db.reviews.findOne({ where: { id: reviewId, customerId } });
+    if (!review) {
+      return res.status(404).json({ error: "Review not found or not owned by user" });
+    }
+    review.rating = rating ?? review.rating;
+    review.comment = comment ?? review.comment;
+    await review.save();
+    // Fetch with customer info
+    const fullReview = await db.reviews.findOne({
+      where: { id: reviewId },
+      include: [{ model: db.customers, as: "customer", attributes: ["name", "avatarUrl"] }],
+    });
+    const mappedReview = {
+      id: fullReview.id,
+      rating: fullReview.rating,
+      title: fullReview.title,
+      comment: fullReview.comment,
+      date: fullReview.createdAt,
+      user: fullReview.customer ? {
+        name: fullReview.customer.name,
+        avatarUrl: fullReview.customer.avatarUrl || undefined,
+      } : { name: "Anonymous" },
+      verified: true,
+    };
+    res.json({ review: mappedReview });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/reviews/:id - delete a review
+router.delete("/reviews/:id", authenticateToken, async (req, res) => {
+  try {
+    const reviewId = req.params.id;
+    const customerId = req.user?.id;
+    // Only allow deleting own review
+    const review = await db.reviews.findOne({ where: { id: reviewId, customerId } });
+    if (!review) {
+      return res.status(404).json({ error: "Review not found or not owned by user" });
+    }
+    await review.destroy();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET /api/products/:id/reviews - get all reviews for a product
 router.get("/products/:id/reviews", async (req, res) => {
@@ -58,7 +112,29 @@ router.post("/products/:id/reviews", authenticateToken, async (req, res) => {
       photos: photos ? JSON.stringify(photos) : null,
       createdAt: new Date(),
     });
-    res.json({ review });
+    // Fetch the review with customer info
+    const fullReview = await db.reviews.findOne({
+      where: { id: review.id },
+      include: [{
+        model: db.customers,
+        as: "customer",
+        attributes: ["name", "avatarUrl"],
+      }],
+    });
+    // Map to frontend format
+    const mappedReview = {
+      id: fullReview.id,
+      rating: fullReview.rating,
+      title: fullReview.title,
+      comment: fullReview.comment,
+      date: fullReview.createdAt,
+      user: fullReview.customer ? {
+        name: fullReview.customer.name,
+        avatarUrl: fullReview.customer.avatarUrl || undefined,
+      } : { name: "Anonymous" },
+      verified: true,
+    };
+    res.json({ review: mappedReview });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

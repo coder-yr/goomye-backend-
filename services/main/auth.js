@@ -83,17 +83,24 @@ router.post("/reset-password", async (req, res) => {
   res.json({ message: "Password reset (not implemented)" });
 });
 
-
 // JWT authentication middleware
 export function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: 'No token provided' });
+  if (!authHeader) {
+    console.error('No Authorization header provided');
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
   const token = authHeader.split(' ')[1];
+  console.log('Extracted Token:', token);
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    console.log('Decoded Token:', decoded);
     req.user = { id: decoded.id, email: decoded.email };
     next();
   } catch (err) {
+    console.error('Token verification failed:', err.message);
     return res.status(401).json({ error: 'Invalid token' });
   }
 }

@@ -7,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 import mega_category from "./models/mega_category.js";
+import returns from "./models/returns.js";
 import reviews from "./models/reviews.js";
 import category from "./models/category.js";
 import sub_category from "./models/subcategory.js";
@@ -27,7 +28,8 @@ import orders from "./models/orders.js";
 import user from "./models/user.js";
 const config = {
   dialect: "mysql",
-  host: "127.0.0.1",
+  host: process.env.DATABASE_HOST,
+  port: process.env.DATABASE_PORT,
   username: process.env.DATABASE_USERNAME,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_NAME,
@@ -49,6 +51,7 @@ const sequelize = new Sequelize(
   config.password,
   {
     host: config.host,
+    port: config.port,
     dialect: config.dialect,
     pool: {
       max: config.pool.max,
@@ -64,6 +67,7 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 db.megaCategory = mega_category(sequelize);
+db.returns = returns(sequelize);
 db.customers = customers(sequelize);
 db.reviews = reviews(sequelize);
 db.category = category(sequelize);
