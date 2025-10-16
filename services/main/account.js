@@ -68,33 +68,106 @@ router.get("/cards", authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/account/profile - Get user profile data
+// GET /api/account/profile - Get user profile data (merged from user + customers)
 router.get("/profile", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = await db.customers.findByPk(userId);
+
+    // Fetch primary user record by userId from JWT
+      const user = await db.user.findByPk(userId, {
+        attributes: ["id", "name", "email", "phone", "createdAt", "updatedAt"],
+    });
     if (!user) return res.status(404).json({ error: "User not found" });
-    if (user.isGuest) {
+
+    // Fetch related customer record (may have extra profile fields)
+    const customer = await db.customers.findOne({
+      where: { userId },
+      attributes: [
+        "id",
+        "name",
+        "email",
+        "phone",
+        "whatsappUpdates",
+        "avatarUrl",
+        "isGuest",
+        "createdAt",
+        "updatedAt",
+      ],
+    });
+
+    if (customer?.isGuest) {
       return res.status(403).json({ error: "Guest users cannot access profile." });
     }
-    res.json(user);
+
+    // Merge with customer taking precedence if present
+    const profile = {
+      id: user.id,
+      customerId: customer?.id ?? null,
+      name: customer?.name ?? user.name,
+      email: customer?.email ?? user.email,
+      phone: customer?.phone ?? user.phone,
+        avatarUrl: customer?.avatarUrl ?? null,
+      whatsappUpdates: customer?.whatsappUpdates ?? false,
+      address: customer?.address ?? null,
+      createdAt: (customer?.createdAt ?? user.createdAt),
+      updatedAt: (customer?.updatedAt ?? user.updatedAt),
+    };
+
+    res.json(profile);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// PUT /api/account/profile - Update user profile
+// PUT /api/account/profile - Update user profile (keeps user + customers in sync)
 router.put("/profile", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, email, phone, country } = req.body;
-    await db.customers.update(
-      { name, email, phone, country },
+     const { name, email, phone, whatsappUpdates } = req.body;
+
+    // Update primary user table
+    await db.user.update(
       {
-        where: { id: userId }
-      }
+        ...(name !== undefined ? { name } : {}),
+        ...(email !== undefined ? { email } : {}),
+        ...(phone !== undefined ? { phone } : {}),
+      },
+      { where: { id: userId } }
     );
-    res.json({ message: "Profile updated successfully" });
+
+    // Update or create related customer record
+    const cust = await db.customers.findOne({ where: { userId } });
+    if (cust) {
+      await cust.update({
+        ...(name !== undefined ? { name } : {}),
+        ...(email !== undefined ? { email } : {}),
+        ...(phone !== undefined ? { phone } : {}),
+        ...(whatsappUpdates !== undefined ? { whatsappUpdates } : {}),
+      });
+    } else {
+      await db.customers.create({
+        userId,
+        isGuest: false,
+        name: name ?? null,
+        email: email ?? null,
+        phone: phone ?? null,
+        whatsappUpdates: whatsappUpdates ?? false,
+      });
+    }
+
+    // Return the updated profile
+      const updatedUser = await db.user.findByPk(userId, { attributes: ["id", "name", "email", "phone"] });
+    const updatedCustomer = await db.customers.findOne({ where: { userId } });
+    const profile = {
+      id: updatedUser.id,
+      customerId: updatedCustomer?.id ?? null,
+      name: updatedCustomer?.name ?? updatedUser.name,
+      email: updatedCustomer?.email ?? updatedUser.email,
+      phone: updatedCustomer?.phone ?? updatedUser.phone,
+        avatarUrl: null,
+      whatsappUpdates: updatedCustomer?.whatsappUpdates ?? false,
+    };
+    res.json({ message: "Profile updated successfully", profile });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
